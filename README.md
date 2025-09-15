@@ -5,7 +5,7 @@
 
 Steps are as follows:
 
-1. Reads in data using the <strong>`read_data`</strong> function. Can be analysis, obs, model (or a combination of both). Data provided needs to contain $(u,v,Z)(t,p,\lambda,\phi)$ data. Amend lines 24-26 with the name of these fields in your data. UM (Met Office) default for these is `x_wind`, `y_wind`, `geopotential_height`.
+1. Reads in data using the <strong>`read_data`</strong> function. Can be analysis, obs, model (or a combination of both). Data provided needs to contain $(u,v,Z)(\lambda,\phi,t,p)$ data. Amend lines 24-26 with the name of these fields in your data. UM (Met Office) default for these is `x_wind`, `y_wind`, `geopotential_height`.
 
 2. Transforms $(u,z) \rightarrow (q,r)$ through the simple transformation $q=(Z g/c_e)+u,$ $r=(Z g/c_e)-u$ in function <strong>`uz_to_qr`</strong>. Here, $c_e$ is the constant of separation derived from the trapping scale $y_0$ calculated in the notebook below. This transformation is necessary for neat solutions to obtain wave-filtered $(u,v,Z)$. See Gill & Clark (1974), and Gill (1980) for details.
 
