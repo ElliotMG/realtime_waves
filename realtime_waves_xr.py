@@ -17,19 +17,36 @@ def read_data(filename, latmax=None):
     # Open the dataset using xarray
     fields = xr.open_dataset(filename)
 
+    def get_var(ds, possible_names, label):
+            for name in possible_names:
+                if name in ds:
+                    print(f"Found {label}: '{name}'")
+                    return ds[name]
+            print(f"None of {possible_names} found for {label}")
+            raise KeyError(f"None of {possible_names} found in dataset for {label}")
+
+    # Map variable aliases
+    u = get_var(fields, ['u', 'x_wind'], 'u')
+    v = get_var(fields, ['v', 'y_wind'], 'v')
+    z = get_var(fields, ['z', 'ht', 'geopotential_height'], 'z')
+    time = get_var(fields, ['t', 'time'], 'time')
+    pressure = get_var(fields, ['pressure', 'level', 'pressure_level', 'p'], 'pressure')
+    latitude = get_var(fields, ['latitude', 'lat'], 'latitude')
+    longitude = get_var(fields, ['longitude', 'lon'], 'longitude')
+    
     # Filter latitude range where abs(lat) <= latmax
-    latrange = fields['latitude'].where(abs(fields['latitude']) <= latmax, drop=True)
+    latrange =latitude.where(abs(latitude) <= latmax, drop=True)
 
     # Select the data within the latitude range
-    u = fields['x_wind'].sel(latitude=latrange)
-    v = fields['y_wind'].sel(latitude=latrange)
-    z = fields['geopotential_height'].sel(latitude=latrange)
+    u = u.sel(latitude=latrange)
+    v = v.sel(latitude=latrange)
+    z = z.sel(latitude=latrange)
 
     # Extract coordinates
-    lons = fields['longitude'].values
+    lons = longitude.values
     lats = latrange.values
-    press = fields['pressure'].values
-    times = fields['time'].values
+    press = pressure.values
+    times = time.values
     
     return u, v, z, lons, lats, press, times
     print(f'data {filename} successfully read')
@@ -217,7 +234,7 @@ import time
 import numpy as np
 
 start_time = time.time()
-model = 'CTC_N2560_GAL9_em00'
+model = 'analysis'
 season = '20200120'
 # define some phyiscal parameters
 g=9.8
@@ -248,7 +265,7 @@ c_on_g=ce/g
 ### For Met Office operational forecasts the data would be 83 days of analysis and 7 days of forecast
 
 #read data
-u,v,z, lons,lats,press,times = read_data(f'/gws/nopw/j04/kscale/USERS/emg/data/wave_data/KSE/KS_DW/{model}_an40d_{season}.nc',latmax=24)
+u,v,z, lons,lats,press,times = read_data(f'/gws/nopw/j04/kscale/USERS/emg/data/wave_data/KSE/KS_DW/MOA_20191211_20190228.nc',latmax=24)
 
 #convert u,z to q,r
 q,r = uz_to_qr(u,z,g_on_c)
