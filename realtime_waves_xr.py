@@ -172,7 +172,7 @@ def filt_project (qf,rf,vf,lats,y0,waves,pmin,pmax,kmin,kmax,c_on_g)  :
 def write_data(u_wave, z_wave, v_wave, lons, lats, press, times, waves):
     import xarray as xr
     import numpy as np
-    outfile = f'/gws/nopw/j04/kscale/USERS/emg/data/wave_data/KSE/KS_DW/waves_{model}_{season}.nc'
+    outfile = f'/gws/nopw/j04/kscale/USERS/emg/data/wave_data/KSE/KS_DW/waves_{model}_{member}_{season}.nc'
     print('writing data to file')
     # Create a dataset
     ds = xr.Dataset(
@@ -228,142 +228,143 @@ def write_data(u_wave, z_wave, v_wave, lons, lats, press, times, waves):
 
     
 #---------------------------------------------------------
-# start of main routine
+# # start of main routine
 
-import time
-import numpy as np
-
-start_time = time.time()
-model = 'analysis'
-season = '20200120'
-# define some phyiscal parameters
-g=9.8
-beta=2.3e-11
-radea=6.371e6
-spd=86400.
-ww=2*np.pi/spd
-
-
-# Define some parameters spefic to the methodology
-latmax=24.  #   +/- latitude range over which to process data.
-kmin=2      # minimum zonal wavenumber
-kmax=40     # maximum zonal wavenumber
-pmin=2.0      # minimum period (in days)
-pmax=30.0   # maximum period (in days)
-y0=6.0      # meridional trapping scale (degrees)
-waves=np.array(['Kelvin','WMRG','R1','R2']) # List of wave types to output
-#waves=np.array(['Kelvin','WMRG']) # List of wave types to output
-
-y0real= 2*np.pi*radea*y0/360.0   # convert trapping scale to metres
-ce=2*y0real**2*beta
-g_on_c=g/ce
-c_on_g=ce/g
-
-
-### read in 90 days of u,v,z data at 6 hourly time resolution and equatorial grid point
-###  Methodology test and applied with 1 degree resolution data, but not dependent on it
-### For Met Office operational forecasts the data would be 83 days of analysis and 7 days of forecast
-
-#read data
-u,v,z, lons,lats,press,times = read_data(f'/gws/nopw/j04/kscale/USERS/emg/data/wave_data/KSE/KS_DW/MOA_20191211_20190228.nc',latmax=24)
-
-#convert u,z to q,r
-q,r = uz_to_qr(u,z,g_on_c)
-
-# Fourier transform in time and longitude
-qf=np.fft.fft2 (q,axes=(0,-1))
-rf=np.fft.fft2 (r,axes=(0,-1))
-vf=np.fft.fft2 (v,axes=(0,-1))
-
-
-# Project onto individual wave modes
-uf_wave,zf_wave,vf_wave=filt_project(qf,rf,vf,lats,y0,waves,pmin,pmax,kmin,kmax,c_on_g)
-
-# Inverse Fourier transform in time and longitude
-
-u_wave=np.real(np.fft.ifft2 (uf_wave,axes=(1,-1)))
-z_wave=np.real(np.fft.ifft2 (zf_wave,axes=(1,-1)))
-v_wave=np.real(np.fft.ifft2 (vf_wave,axes=(1,-1)))
-
-print(u_wave[:,0,0,0,0])
-print(z_wave[:,0,0,0,0])
-print(v_wave[:,0,0,0,0])
-
-
-write_data(u_wave,z_wave,v_wave,lons,lats,press,times,waves)
-end_time = time.time()
-elapsed_time = end_time - start_time
-print(f"Waves calculated in {elapsed_time:.2f} seconds.")
-
-
-
-# End of main routine
-###-----------------------------------------------------------------
-
-# ######### FOR LOOPING OVER ENSEMBLE MEMBERS ######################
 # import time
 # import numpy as np
 
 # start_time = time.time()
-
-# # Define the range of members to loop over
-# members = [f'em0{i}' for i in range(1, 6)]  # Generates ['em01', 'em02', 'em03', 'em04', 'em05']
+# model = 'engl'
+# member='em05'
 # season = '20200120'
+# # define some phyiscal parameters
+# g=9.8
+# beta=2.3e-11
+# radea=6.371e6
+# spd=86400.
+# ww=2*np.pi/spd
 
-# # Define some physical parameters
-# g = 9.8
-# beta = 2.3e-11
-# radea = 6.371e6
-# spd = 86400.
-# ww = 2 * np.pi / spd
 
-# # Define some parameters specific to the methodology
-# latmax = 24.  # +/- latitude range over which to process data.
-# kmin = 2      # minimum zonal wavenumber
-# kmax = 40     # maximum zonal wavenumber
-# pmin = 2.0    # minimum period (in days)
-# pmax = 30.0   # maximum period (in days)
-# y0 = 6.0      # meridional trapping scale (degrees)
-# waves = np.array(['Kelvin', 'WMRG', 'R1', 'R2'])  # List of wave types to output
+# # Define some parameters spefic to the methodology
+# latmax=24.  #   +/- latitude range over which to process data.
+# kmin=2      # minimum zonal wavenumber
+# kmax=40     # maximum zonal wavenumber
+# pmin=2.0      # minimum period (in days)
+# pmax=30.0   # maximum period (in days)
+# y0=6.0      # meridional trapping scale (degrees)
+# waves=np.array(['Kelvin','WMRG','R1','R2']) # List of wave types to output
+# #waves=np.array(['Kelvin','WMRG']) # List of wave types to output
 
-# y0real = 2 * np.pi * radea * y0 / 360.0  # Convert trapping scale to metres
-# ce = 2 * y0real**2 * beta
-# g_on_c = g / ce
-# c_on_g = ce / g
+# y0real= 2*np.pi*radea*y0/360.0   # convert trapping scale to metres
+# ce=2*y0real**2*beta
+# g_on_c=g/ce
+# c_on_g=ce/g
 
-# # Loop over each member
-# for member in members:
-#     model = f'CTC_N2560_GAL9_{member}'
-#     print(f"Processing model: {model}")
 
-#     # Read data
-#     input_file = f'/gws/nopw/j04/kscale/USERS/emg/data/wave_data/KSE/KS_DW/{model}_an40d_{season}.nc'
-#     u, v, z, lons, lats, press, times = read_data(input_file, latmax=24)
+# ### read in 90 days of u,v,z data at 6 hourly time resolution and equatorial grid point
+# ###  Methodology test and applied with 1 degree resolution data, but not dependent on it
+# ### For Met Office operational forecasts the data would be 83 days of analysis and 7 days of forecast
 
-#     # Convert u, z to q, r
-#     q, r = uz_to_qr(u, z, g_on_c)
+# #read data
+# u,v,z, lons,lats,press,times = read_data(f'/gws/nopw/j04/kscale/USERS/emg/data/wave_data/KSE/KS_DW/{model}_{member}_an40d_{season}.nc',latmax=24)
 
-#     # Fourier transform in time and longitude
-#     qf = np.fft.fft2(q, axes=(0, -1))
-#     rf = np.fft.fft2(r, axes=(0, -1))
-#     vf = np.fft.fft2(v, axes=(0, -1))
+# #convert u,z to q,r
+# q,r = uz_to_qr(u,z,g_on_c)
 
-#     # Project onto individual wave modes
-#     uf_wave, zf_wave, vf_wave = filt_project(qf, rf, vf, lats, y0, waves, pmin, pmax, kmin, kmax, c_on_g)
+# # Fourier transform in time and longitude
+# qf=np.fft.fft2 (q,axes=(0,-1))
+# rf=np.fft.fft2 (r,axes=(0,-1))
+# vf=np.fft.fft2 (v,axes=(0,-1))
 
-#     # Inverse Fourier transform in time and longitude
-#     u_wave = np.real(np.fft.ifft2(uf_wave, axes=(1, -1)))
-#     z_wave = np.real(np.fft.ifft2(zf_wave, axes=(1, -1)))
-#     v_wave = np.real(np.fft.ifft2(vf_wave, axes=(1, -1)))
 
-#     print(u_wave[:, 0, 0, 0, 0])
-#     print(z_wave[:, 0, 0, 0, 0])
-#     print(v_wave[:, 0, 0, 0, 0])
+# # Project onto individual wave modes
+# uf_wave,zf_wave,vf_wave=filt_project(qf,rf,vf,lats,y0,waves,pmin,pmax,kmin,kmax,c_on_g)
 
-#     # Write data to file
-#     write_data(u_wave, z_wave, v_wave, lons, lats, press, times, waves)
+# # Inverse Fourier transform in time and longitude
 
+# u_wave=np.real(np.fft.ifft2 (uf_wave,axes=(1,-1)))
+# z_wave=np.real(np.fft.ifft2 (zf_wave,axes=(1,-1)))
+# v_wave=np.real(np.fft.ifft2 (vf_wave,axes=(1,-1)))
+
+# print(u_wave[:,0,0,0,0])
+# print(z_wave[:,0,0,0,0])
+# print(v_wave[:,0,0,0,0])
+
+
+# write_data(u_wave,z_wave,v_wave,lons,lats,press,times,waves)
 # end_time = time.time()
 # elapsed_time = end_time - start_time
-# print(f"Waves calculated for all members in {elapsed_time:.2f} seconds.")
-# #########------------------------------------------------###################
+# print(f"Waves calculated in {elapsed_time:.2f} seconds.")
+
+
+
+# # End of main routine
+# ###-----------------------------------------------------------------
+
+######### FOR LOOPING OVER ENSEMBLE MEMBERS ######################
+import time
+import numpy as np
+
+start_time = time.time()
+
+# Define the range of members to loop over
+members = [f'em0{i}' for i in range(6)]
+season = '20200120'
+
+# Define some physical parameters
+g = 9.8
+beta = 2.3e-11
+radea = 6.371e6
+spd = 86400.
+ww = 2 * np.pi / spd
+
+# Define some parameters specific to the methodology
+latmax = 24.  # +/- latitude range over which to process data.
+kmin = 2      # minimum zonal wavenumber
+kmax = 40     # maximum zonal wavenumber
+pmin = 2.0    # minimum period (in days)
+pmax = 30.0   # maximum period (in days)
+y0 = 6.0      # meridional trapping scale (degrees)
+waves = np.array(['Kelvin', 'WMRG', 'R1', 'R2'])  # List of wave types to output
+
+y0real = 2 * np.pi * radea * y0 / 360.0  # Convert trapping scale to metres
+ce = 2 * y0real**2 * beta
+g_on_c = g / ce
+c_on_g = ce / g
+
+# Loop over each member
+for member in members:
+    model = f'CTC_N2560_GAL9_{member}'
+    print(f"Processing model: {model}")
+
+    # Read data
+    input_file = f'/gws/nopw/j04/kscale/USERS/emg/data/wave_data/KSE/KS_DW/{model}_an40d_{season}.nc'
+    u, v, z, lons, lats, press, times = read_data(input_file, latmax=24)
+
+    # Convert u, z to q, r
+    q, r = uz_to_qr(u, z, g_on_c)
+
+    # Fourier transform in time and longitude
+    qf = np.fft.fft2(q, axes=(0, -1))
+    rf = np.fft.fft2(r, axes=(0, -1))
+    vf = np.fft.fft2(v, axes=(0, -1))
+
+    # Project onto individual wave modes
+    uf_wave, zf_wave, vf_wave = filt_project(qf, rf, vf, lats, y0, waves, pmin, pmax, kmin, kmax, c_on_g)
+
+    # Inverse Fourier transform in time and longitude
+    u_wave = np.real(np.fft.ifft2(uf_wave, axes=(1, -1)))
+    z_wave = np.real(np.fft.ifft2(zf_wave, axes=(1, -1)))
+    v_wave = np.real(np.fft.ifft2(vf_wave, axes=(1, -1)))
+
+    print(u_wave[:, 0, 0, 0, 0])
+    print(z_wave[:, 0, 0, 0, 0])
+    print(v_wave[:, 0, 0, 0, 0])
+
+    # Write data to file
+    write_data(u_wave, z_wave, v_wave, lons, lats, press, times, waves)
+
+end_time = time.time()
+elapsed_time = end_time - start_time
+print(f"Waves calculated for all members in {elapsed_time:.2f} seconds.")
+#########------------------------------------------------###################
